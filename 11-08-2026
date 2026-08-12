@@ -1,0 +1,10 @@
+Amostra = Individuos
+Qualidade da Amostra
+Treinamento = Descobrir o peso de cada variável
+
+Fases
+1 - Entender o problema (predição ou previsão) 
+2 - Fonte de dados/amostras para o treinamento
+3 - Limpeza de dados (pandas)
+4 - Aplicar diferentes modelos para identificar o mais adequado
+
