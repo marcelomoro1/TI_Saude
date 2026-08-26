@@ -1,1 +1,95 @@
+# predicao_comparativo_glicemia.ipynb
+# Original file is located at
+# https://colab.research.google.com/drive/1TuT_Y1zBbr4hOiaSG4Ty9BAAVawEdY6C
 
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score
+
+# Modelos de classificação
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+
+# 1. Carregar os dados
+url = 'https://raw.githubusercontent.com/alexandrezamberlan/tias/refs/heads/main/3_predicao_previsao_codigos_exemplos/glicose_data.csv'
+df = pd.read_csv(url)
+
+df
+
+# No df preciso trocar na coluna KCAL os valores Abaixo para 0; Recomendado para 1; Acima para 2
+df['KCAL'] = df['KCAL'].replace({'Abaixo': 0, 'Recomendado': 1, 'Acima': 2})
+
+# No df preciso trocar na coluna CARB os valores Abaixo para 0; Recomendado para 1; Acima para 2
+df['CARB'] = df['CARB'].replace({'Abaixo': 0, 'Recomendado': 1, 'Acima': 2})
+
+# No df preciso trocar na coluna GLICEMIA os valores Abaixo para 0; Normal para 1; Acima para 2
+df['GLICEMIA'] = df['GLICEMIA'].replace({'Abaixo': 0, 'Normal': 1, 'Acima': 2})
+
+# 2. Features e variável alvo
+features = ['INSULINA', 'KCAL', 'CARB', 'SONO', 'padel']
+target = 'GLICEMIA'
+
+X = df[features]
+y = df[target]
+
+y
+
+# No X preciso eliminar as linhas com colunas NaN
+X = X.dropna()
+
+# No y preciso eliminar as linhas com colunas NaN
+y = y.dropna()
+
+# No y preciso eliminar a linha 446
+y = y.drop(446)
+
+# 3. Divisão treino/teste com estratificação
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42, stratify=y
+)
+
+# 4. Padronizar (necessário para SVM e KNN)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# 5. Modelos de classificação
+modelos = {
+    'Logistic Regression': LogisticRegression(max_iter=1000),
+    'Decision Tree': DecisionTreeClassifier(),
+    'Random Forest': RandomForestClassifier(),
+    'KNN': KNeighborsClassifier(),
+    'Naive Bayes': GaussianNB(),
+    'SVM': SVC(),
+    'Gradient Boosting': GradientBoostingClassifier()
+}
+
+# 6. Avaliar cada modelo
+resultados = []
+
+print("Avaliação dos Modelos:\n")
+
+for nome, modelo in modelos.items():
+    modelo.fit(X_train, y_train)
+    y_pred = modelo.predict(X_test)
+
+    acc = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred, average='macro', zero_division=0)
+
+    resultados.append((nome, acc, f1))
+
+    # Ordenar
+    print(f"Modelo: {nome}")
+    print(f"Acurácia: {acc:.4f}")
+    print(f"F1-Score (Macro): {f1:.4f}")
+    print("Relatório de Classificação:")
+    print(classification_report(y_test, y_pred, zero_division=0))
+    print("Matriz de Confusão:")
+    print(confusion_matrix(y_test, y_pred))
+    print("-" * 60)
